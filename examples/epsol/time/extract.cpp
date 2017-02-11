@@ -19,7 +19,8 @@ int main(int argc, char** argv) {
          << "\nminute: " << time::extract_minute(tp)
          << "\nsecond: " << time::extract_second(tp) << '\n';
 
-    auto time_tup = time::extract<year, month, day, hour, minute, second>(tp);
+    auto time_tup = time::extract<year, month, day, hour, minute, second>(
+        tp, epsol::time::TimeZone::GMT);
     cout << "year from tuple: " << std::get<0>(time_tup)
          << "\nmonth from tuple: " << std::get<1>(time_tup)
          << "\nday from tuple: " << std::get<2>(time_tup)

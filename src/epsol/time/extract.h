@@ -3,18 +3,14 @@
 
 #include <chrono>
 #include <tuple>
+#include "epsol/time/time-zone.h"
 
 namespace epsol {
 namespace time {
 
 /**
- * synonym for std::long::namespaces::now()
+ * tags passing as the parameter of `extract`
  */
-template <typename Clock = std::chrono::system_clock>
-typename Clock::time_point now() {
-    return Clock::now();
-}
-
 namespace tags {
 
 class year {};
@@ -24,7 +20,9 @@ class hour {};
 class minute {};
 class second {};
 
-}
+}  // namespace tags
+
+namespace detail {
 
 /**
  * generate a bunch of helper function to extract field of tm according to tags
@@ -47,18 +45,18 @@ int extract_impl(tm* t, tags::month) {
 }
 
 #undef EXTRACT_IMPL
+}  // namespace detail
 
 template <typename... TimeTags, typename TimePoint>
-auto extract(TimePoint tp) {
-    time_t the_time = TimePoint::clock::to_time_t(tp);
-    tm* tptr = localtime(&the_time);
-    return std::make_tuple(extract_impl(tptr, TimeTags())...);
+auto extract(TimePoint tp, TimeZone tz = TimeZone::LOCAL) {
+    std::tm the_time = to_tm(tp, tz);
+    return std::make_tuple(detail::extract_impl(&the_time, TimeTags())...);
 }
 
-#define DEF_EXTRACT_SINGLE(time)                     \
-    template <typename TimePoint>                    \
-    int extract_##time(TimePoint tp) {               \
-        return std::get<0>(extract<tags::time>(tp)); \
+#define DEF_EXTRACT_SINGLE(time)                                      \
+    template <typename TimePoint>                                     \
+    int extract_##time(TimePoint tp, TimeZone tz = TimeZone::LOCAL) { \
+        return std::get<0>(extract<tags::time>(tp, tz));              \
     }
 
 DEF_EXTRACT_SINGLE(year)
@@ -73,4 +71,4 @@ DEF_EXTRACT_SINGLE(second)
 }  // namespace time
 }  // namespace epsol
 
-#endif
+#endif  // EPSOL_TIME_EXTRACT_
