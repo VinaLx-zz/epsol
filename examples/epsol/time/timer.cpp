@@ -1,7 +1,8 @@
 #include <iostream>
 #include "epsol/time.h"
 
-using namespace epsol;
+using namespace epsol::time;
+using epsol::operator<<;
 using std::cout;
 
 void DummyFunction(const std::string& s) {
