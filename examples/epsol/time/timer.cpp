@@ -2,7 +2,7 @@
 #include "epsol/time.h"
 
 using namespace epsol::time;
-using epsol::operator<<;
+using epsol::time::operator<<;
 using std::cout;
 
 void DummyFunction(const std::string& s) {

@@ -16,12 +16,14 @@ typename Clock::time_point now() {
 }
 
 namespace tags {
+
 class year {};
 class month {};
 class day {};
 class hour {};
 class minute {};
 class second {};
+
 }
 
 /**
@@ -67,7 +69,8 @@ DEF_EXTRACT_SINGLE(minute)
 DEF_EXTRACT_SINGLE(second)
 
 #undef DEF_EXTRACT_SINGLE
-}
-}
+
+}  // namespace time
+}  // namespace epsol
 
 #endif
