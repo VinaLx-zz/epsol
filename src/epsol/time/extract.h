@@ -49,8 +49,8 @@ int extract_impl(tm* t, tags::month) {
 
 template <typename... TimeTags, typename TimePoint>
 auto extract(TimePoint tp, TimeZone tz = TimeZone::LOCAL) {
-    std::tm the_time = to_tm(tp, tz);
-    return std::make_tuple(detail::extract_impl(&the_time, TimeTags())...);
+    std::tm* the_time = to_tm_ptr(tp, tz);
+    return std::make_tuple(detail::extract_impl(the_time, TimeTags())...);
 }
 
 #define DEF_EXTRACT_SINGLE(time)                                      \

@@ -13,4 +13,9 @@ int main(int argc, char** argv) {
               << to_string(42s) << " = " << 42s << '\n'
               << to_string(42min) << " = " << 42min << '\n'
               << to_string(42h) << " = " << 42h << '\n';
+
+    auto t = epsol::time::now();
+    std::cout << "local time: " << to_string(t) << '\n'
+              << "gm time: " << to_string(t, epsol::time::TimeZone::GMT)
+              << '\n';
 }

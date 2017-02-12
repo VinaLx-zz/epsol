@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <string>
+#include "epsol/time/time-zone.h"
 
 namespace epsol {
 namespace time {
@@ -27,6 +28,13 @@ DEF_TIME_TO_STRING(minutes, min)
 DEF_TIME_TO_STRING(hours, h)
 
 #undef DEF_TIME_TO_STRING
+
+template <typename TimePoint>
+std::string to_string(TimePoint tp, TimeZone tz = TimeZone::LOCAL) {
+    const char* fix_length_time = std::asctime(to_tm_ptr(tp, tz));
+    // omit '\n'
+    return std::string(fix_length_time, fix_length_time + 24);
+}
 
 }  // namespace time
 }  // namespace epsol
