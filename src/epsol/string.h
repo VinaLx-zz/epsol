@@ -1,3 +1,6 @@
+#ifndef EPSOL_STRING_
+#define EPSOL_STRING_
+
 #include <cctype>
 #include <string>
 
@@ -20,6 +23,7 @@ std::string strip_if(const std::string& s, Predicate p) {
         --e;
     return s.substr(b, e - b);
 }
+
 /**
  * returns an copy of the original string with leading and trailing spaces
  * (satisfies isspace) stripped
@@ -31,3 +35,5 @@ inline std::string strip(const std::string& s) {
 }  // namespace string
 
 }  // namespace epsol
+
+#endif // EPSOL_STRING_
