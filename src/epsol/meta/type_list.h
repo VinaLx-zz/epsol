@@ -71,6 +71,25 @@ template <>
 struct pop_front<type_list<>> : type_list<> {};
 
 /**
+ * remove all T from a type_list
+ */
+template <typename TpList, typename T>
+struct remove;
+
+template <typename TpList, typename T>
+using remove_t = typename remove<TpList, T>::type;
+
+template <typename T>
+struct remove<type_list<>, T> : type_list<> {};
+
+template <typename T, typename... Types>
+struct remove<type_list<T, Types...>, T> : remove_t<type_list<Types...>, T> {};
+
+template <typename T1, typename T2, typename... Types>
+struct remove<type_list<T1, Types...>, T2>
+    : push_front_t<T1, remove_t<type_list<Types...>, T2>> {};
+
+/**
  * try to find T in specific type_list<Types...>
  * if found     find::index is the non-negative index, find::value = true
  * if not found find::index = -1, find::value = false
@@ -92,6 +111,39 @@ template <typename T>
 struct find<type_list<>, T> : std::false_type {
     static constexpr int64_t index = -1;
 };
+
+template <typename TpList, size_t index>
+struct at;
+
+template <typename TpList, size_t index>
+using at_t = typename at<TpList, index>::type;
+
+namespace detail {
+
+template <typename TpList, size_t index>
+struct at_impl;
+
+template <size_t index, typename T, typename... Types>
+struct at_impl<type_list<T, Types...>, index>
+    : at_impl<type_list<Types...>, index - 1> {};
+
+template <typename T, typename... Types>
+struct at_impl<type_list<T, Types...>, 0> {
+    using type = T;
+};
+
+template <typename T>
+constexpr bool less(T lhs, T rhs) {
+    return lhs < rhs;
+}
+
+}  // namespace detail
+
+template <size_t index, typename... Types>
+struct at<type_list<Types...>, index>
+    : std::enable_if_t<
+          detail::less(index, sizeof...(Types)),
+          detail::at_impl<type_list<Types...>, index - 1>> {};
 
 }  // namespace epsol::meta
 
