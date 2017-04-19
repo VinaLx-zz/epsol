@@ -1,11 +1,15 @@
-#ifndef EPSOL_META_TYPE_LIST
-#define EPSOL_META_TYPE_LIST
+#ifndef EPSOL_META_TYPE_LIST_
+#define EPSOL_META_TYPE_LIST_
 
 #include <cstdint>
 #include <type_traits>
+#include "util.h"
 
 namespace epsol::meta {
 
+/**
+ * type_list to hold types in its template arguments
+ */
 template <typename... Types>
 struct type_list {
     static constexpr size_t size = sizeof...(Types);
@@ -112,6 +116,10 @@ struct find<type_list<>, T> : std::false_type {
     static constexpr int64_t index = -1;
 };
 
+/**
+ * access the type at specific index in the type_list
+ * compiler error if out of range
+ */
 template <typename TpList, size_t index>
 struct at;
 
@@ -128,23 +136,17 @@ struct at_impl<type_list<T, Types...>, index>
     : at_impl<type_list<Types...>, index - 1> {};
 
 template <typename T, typename... Types>
-struct at_impl<type_list<T, Types...>, 0> {
-    using type = T;
-};
-
-template <typename T>
-constexpr bool less(T lhs, T rhs) {
-    return lhs < rhs;
-}
+struct at_impl<type_list<T, Types...>, 0>: identity<T> {};
 
 }  // namespace detail
 
 template <size_t index, typename... Types>
 struct at<type_list<Types...>, index>
     : std::enable_if_t<
-          detail::less(index, sizeof...(Types)),
-          detail::at_impl<type_list<Types...>, index>> {};
+          less(index, sizeof...(Types)),
+          typename detail::at_impl<type_list<Types...>, index>> {};
 
 }  // namespace epsol::meta
 
-#endif  // EPSOL_META_TYPE_LIST
+#endif  // EPSOL_META_TYPE_LIST_
+

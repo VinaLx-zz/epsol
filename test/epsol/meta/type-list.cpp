@@ -1,15 +1,12 @@
 #include <string>
 #include <type_traits>
-#include "epsol/meta/type_list.h"
+#include "epsol/meta/type-list.h"
 
 using namespace epsol::meta;
 using std::is_same;
 using std::string;
 
 using list1 = type_list<int, double>;
-
-template <typename A>
-class TD;
 
 int main() {
     static_assert(list1::size == 2);
