@@ -143,7 +143,7 @@ template <size_t index, typename... Types>
 struct at<type_list<Types...>, index>
     : std::enable_if_t<
           detail::less(index, sizeof...(Types)),
-          detail::at_impl<type_list<Types...>, index - 1>> {};
+          detail::at_impl<type_list<Types...>, index>> {};
 
 }  // namespace epsol::meta
 
