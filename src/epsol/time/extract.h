@@ -27,24 +27,20 @@ namespace detail {
 /**
  * generate a bunch of helper function to extract field of tm according to tags
  */
-#define DEF_EXTRACT_IMPL(time, field)     \
+#define DEF_EXTRACT_IMPL(time, field, bias)     \
     int extract_impl(tm* t, tags::time) { \
-        return t->field;                  \
+        return t->field + bias;                  \
     }
 
-DEF_EXTRACT_IMPL(day, tm_mday)
-DEF_EXTRACT_IMPL(hour, tm_hour)
-DEF_EXTRACT_IMPL(minute, tm_min)
-DEF_EXTRACT_IMPL(second, tm_sec)
-
-int extract_impl(tm* t, tags::year) {
-    return t->tm_year + 1900;
-}
-int extract_impl(tm* t, tags::month) {
-    return t->tm_mon + 1;
-}
+DEF_EXTRACT_IMPL(year, tm_year, 1900)
+DEF_EXTRACT_IMPL(month, tm_mon, 1)
+DEF_EXTRACT_IMPL(day, tm_mday, 0)
+DEF_EXTRACT_IMPL(hour, tm_hour, 0)
+DEF_EXTRACT_IMPL(minute, tm_min, 0)
+DEF_EXTRACT_IMPL(second, tm_sec, 0)
 
 #undef EXTRACT_IMPL
+
 }  // namespace detail
 
 template <typename... TimeTags, typename TimePoint>
