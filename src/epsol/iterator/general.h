@@ -33,11 +33,11 @@ class forward_iterator
     }
 
     bool terminated() const {
-        return terminated_ or is_terminate_(next_);
+        return terminated_;
     }
 
     self_type operator++() {
-        if (terminated()) {
+        if (should_terminated()) {
             terminated_ = true;
         } else {
             increment();
@@ -57,6 +57,9 @@ class forward_iterator
     void increment() {
         next_ = inc_(next_);
     }
+    bool should_terminated() const {
+        return terminated_ or is_terminate_(next_);
+    }
 
   private:
     H next_;
@@ -74,6 +77,16 @@ bool operator==(const forward_iterator<b, T, H> &iter, iter_end_t _) {
 template <bool b, typename T, typename H>
 bool operator==(iter_end_t e, const forward_iterator<b, T, H> &iter) {
     return iter == e;
+}
+
+template <bool b, typename T, typename H>
+bool operator!=(const forward_iterator<b, T, H> &iter, iter_end_t e) {
+    return not (iter == e);
+}
+
+template <bool b, typename T, typename H>
+bool operator!=(iter_end_t e, const forward_iterator<b, T, H> &iter) {
+    return not (iter == e);
 }
 
 } // namespace epsol::iterator
