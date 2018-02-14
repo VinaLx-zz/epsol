@@ -4,17 +4,26 @@
 #include "./iterator.h"
 #include "epsol/iterator/general.h"
 #include <functional>
+#include <type_traits>
 
 namespace epsol::range {
 
-template <typename T>
+template <typename T, bool DefaultIncrement>
 class range {
   public:
     range(const T &start)
-        : start_(start), terminator_([](const T &t) { return false; }) {}
+        : start_(start),
+          terminator_([](const T &_1, const T &_2) { return false; }) {}
+
+    using incrementor = typename iterator<T>::incrementor;
+    using terminator = typename iterator<T>::terminator;
+
+    range(const T &start, incrementor inc, terminator term)
+        : start_(start), incrementor_(std::move(inc)),
+          terminator_(std::move(term)) {}
 
     iterator<T> begin() const {
-        if (not incrementor_) {
+        if constexpr (DefaultIncrement) {
             return iterator<T>(
                 start_,
                 [](const T &t) {
@@ -29,45 +38,67 @@ class range {
         return epsol::iterator::iter_end_t{};
     }
 
-    range<T> to(const T &e) {
-        add_terminator([e](const T &t) { return t == e; });
-        return *this;
+    range<T, DefaultIncrement> to(const T &e) {
+        return range<T, DefaultIncrement>(
+            start_, incrementor_,
+            make_terminator(
+                [e](const T &now, const T &_) { return now == e; }));
     }
-    template <typename Func>
-    range<T> when(Func f) {
-        add_terminator([f](const T &t) { return not f(t); });
-        return *this;
+
+    range<T, DefaultIncrement> until(const T &e) {
+        return range<T, DefaultIncrement>(
+            start_, incrementor_,
+            make_terminator(
+                [e](const T &_, const T &next) { return next == e; }));
     }
 
     template <typename Func>
-    range<T> step(Func f) {
-        add_incrementor(f);
-        return *this;
+    range<T, DefaultIncrement> when(Func f) {
+        return range<T, DefaultIncrement>(
+            start_, incrementor_,
+            make_terminator([f = std::move(f)](const T &_, const T &next) {
+                return not f(next);
+            }));
+    }
+
+    template <typename P>
+    range<T, false> step(P p) {
+        if constexpr (std::is_convertible<P, incrementor>::value) {
+            return range<T, false>(
+                start_, make_incrementor(std::move(p)), terminator_);
+        } else {
+            return range<T, false>(
+                start_, make_incrementor([p = std::move(p)](const T &t)->T {
+                    return t + p;
+                }),
+                terminator_);
+        }
     }
 
   private:
-    void add_terminator(typename iterator<T>::terminator new_term) {
-        auto old = terminator_;
-        terminator_ = [ old, new_term ](const T &t) {
-            return new_term(t) or old(t);
+    terminator make_terminator(terminator new_term) {
+        return
+            [ old = this->terminator_, new_term ](const T &now, const T &next) {
+            return new_term(now, next) or old(now, next);
         };
     }
-    void add_incrementor(typename iterator<T>::incrementor new_inc) {
-        if (not incrementor_) {
-            incrementor_ = [](const T &t) { return t; };
+    incrementor make_incrementor(incrementor new_inc) {
+        if constexpr (DefaultIncrement) {
+            return new_inc;
         }
-        incrementor_ = [ old = this->incrementor_, new_inc ](const T &t) {
+        return [ old = this->incrementor_, new_inc ](const T &t) {
             return new_inc(old(t));
         };
     }
+
     T start_;
     typename iterator<T>::incrementor incrementor_;
     typename iterator<T>::terminator terminator_;
 };
 
 template <typename T>
-range<T> from(const T &start) {
-    return range<T>(start);
+range<T, true> from(const T &start) {
+    return range<T, true>(start);
 }
 
 } // namespace epsol::range

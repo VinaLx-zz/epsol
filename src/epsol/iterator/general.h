@@ -18,12 +18,12 @@ class forward_iterator
 
   public:
     using incrementor = std::function<H(const H &)>;
-    using terminator = std::function<bool(const H &)>;
+    using terminator = std::function<bool(const H &, const H &)>;
     using accessor = std::function<typename super_type::reference(const H &)>;
 
     forward_iterator(
         const H &init, accessor get, incrementor inc, terminator term)
-        : next_(init), get_(get), inc_(inc), is_terminate_(term){};
+        : now_(init), get_(get), inc_(inc), is_terminate_(term){};
 
     typename super_type::pointer operator->() {
         return &get_value();
@@ -37,10 +37,9 @@ class forward_iterator
     }
 
     self_type operator++() {
-        if (should_terminated()) {
-            terminated_ = true;
-        } else {
-            increment();
+        auto next = inc_(now_);
+        if (not(terminated_ = terminated_ or is_terminate_(now_, next))) {
+            now_ = next;
         }
         return *this;
     }
@@ -52,17 +51,14 @@ class forward_iterator
 
   protected:
     typename super_type::reference get_value() {
-        return get_(next_);
+        return get_(now_);
     }
     void increment() {
-        next_ = inc_(next_);
-    }
-    bool should_terminated() const {
-        return terminated_ or is_terminate_(next_);
+        now_ = inc_(now_);
     }
 
   private:
-    H next_;
+    H now_;
     bool terminated_ = false;
     accessor get_;
     incrementor inc_;
@@ -81,12 +77,12 @@ bool operator==(iter_end_t e, const forward_iterator<b, T, H> &iter) {
 
 template <bool b, typename T, typename H>
 bool operator!=(const forward_iterator<b, T, H> &iter, iter_end_t e) {
-    return not (iter == e);
+    return not(iter == e);
 }
 
 template <bool b, typename T, typename H>
 bool operator!=(iter_end_t e, const forward_iterator<b, T, H> &iter) {
-    return not (iter == e);
+    return not(iter == e);
 }
 
 } // namespace epsol::iterator

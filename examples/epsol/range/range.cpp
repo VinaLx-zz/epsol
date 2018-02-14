@@ -3,7 +3,6 @@
 #include "epsol/range.h"
 #include <iostream>
 
-
 using namespace epsol::range;
 using std::cout;
 
@@ -17,10 +16,17 @@ int main() {
     //     cout << i << ' '; // 1 3 5
     // }
     // cout << '\n';
-    for (auto i : from(1).step([](int i) { return i + 3; }).to(10)) {
-        cout << i << ' '; // 1 4 7 10
+
+    for (auto i : from(1).to(9).step(2)) {
+        cout << i << ' '; // 1 3 5 7 9
     }
     cout << '\n';
+
+    for (auto i : from(1).step([](int i) { return i * 2; }).to(32)) {
+        cout << i << ' '; // 1 2 4 8 16 32
+    }
+    cout << '\n';
+
     for (auto i : from(1).when([](int i) { return i < 5; })) {
         cout << i << ' '; // 1 2 3 4
     }
