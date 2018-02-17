@@ -3,21 +3,30 @@
 
 #include "basic-traits.h"
 #include <functional>
+#include <type_traits>
 
 namespace epsol::iterator {
 
 class iter_end_t {};
 
-template <bool Readonly, typename T, typename H>
-class forward_iterator
-    : public iterator_basic_traits<Readonly, T, std::forward_iterator_tag> {
+inline iter_end_t end() {
+    return iter_end_t{};
+}
+
+template <
+    bool Readonly, typename T, typename H,
+    typename Tag = std::forward_iterator_tag>
+class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
+    static_assert(
+        std::is_base_of<Tag, std::forward_iterator_tag>::value or
+        (std::is_same<Tag, std::output_iterator_tag>::value and not Readonly));
+
   private:
-    using super_type =
-        iterator_basic_traits<Readonly, T, std::forward_iterator_tag>;
+    using super_type = iterator_basic_traits<Readonly, T, Tag>;
     using self_type = forward_iterator<Readonly, T, H>;
 
   public:
-    using incrementor = std::function<H(const H &)>;
+    using incrementor = std::function<H(H)>;
     using terminator = std::function<bool(const H &, const H &)>;
     using accessor = std::function<typename super_type::reference(const H &)>;
 
@@ -36,10 +45,18 @@ class forward_iterator
         return terminated_;
     }
 
+    self_type& begin() {
+        return *this;
+    }
+
+    iter_end_t end() {
+        return epsol::iterator::end();
+    }
+
     self_type operator++() {
         auto next = inc_(now_);
         if (not(terminated_ = terminated_ or is_terminate_(now_, next))) {
-            now_ = next;
+            now_ = std::move(next);
         }
         return *this;
     }
@@ -65,23 +82,23 @@ class forward_iterator
     terminator is_terminate_;
 };
 
-template <bool b, typename T, typename H>
-bool operator==(const forward_iterator<b, T, H> &iter, iter_end_t _) {
+template <bool b, typename T, typename H, typename Tag>
+bool operator==(const forward_iterator<b, T, H, Tag> &iter, iter_end_t _) {
     return iter.terminated();
 }
 
-template <bool b, typename T, typename H>
-bool operator==(iter_end_t e, const forward_iterator<b, T, H> &iter) {
+template <bool b, typename T, typename H, typename Tag>
+bool operator==(iter_end_t e, const forward_iterator<b, T, H, Tag> &iter) {
     return iter == e;
 }
 
-template <bool b, typename T, typename H>
-bool operator!=(const forward_iterator<b, T, H> &iter, iter_end_t e) {
+template <bool b, typename T, typename H, typename Tag>
+bool operator!=(const forward_iterator<b, T, H, Tag> &iter, iter_end_t e) {
     return not(iter == e);
 }
 
-template <bool b, typename T, typename H>
-bool operator!=(iter_end_t e, const forward_iterator<b, T, H> &iter) {
+template <bool b, typename T, typename H, typename Tag>
+bool operator!=(iter_end_t e, const forward_iterator<b, T, H, Tag> &iter) {
     return not(iter == e);
 }
 
