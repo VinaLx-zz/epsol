@@ -2,6 +2,7 @@
 #define EPSOL_ITERATOR_GENERAL_
 
 #include "basic-traits.h"
+#include "epsol/functional.h"
 #include <functional>
 #include <type_traits>
 
@@ -27,12 +28,16 @@ class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
 
   public:
     using incrementor = std::function<H(H)>;
-    using terminator = std::function<bool(const H &, const H &)>;
+    using terminator = std::function<bool(const H &)>;
+    using filter = std::function<bool(const T &)>;
     using accessor = std::function<typename super_type::reference(const H &)>;
 
     forward_iterator(
-        const H &init, accessor get, incrementor inc, terminator term)
-        : now_(init), get_(get), inc_(inc), is_terminate_(term){};
+        const H &init, accessor get, incrementor inc, terminator term_now,
+        terminator term_next,
+        filter p = epsol::functional::always<const T &>(true))
+        : now_(init), get_(get), inc_(inc), term_now_(term_now),
+          term_next_(term_next), filter(p){};
 
     typename super_type::pointer operator->() {
         return &get_value();
@@ -45,7 +50,7 @@ class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
         return terminated_;
     }
 
-    self_type& begin() {
+    self_type &begin() {
         return *this;
     }
 
@@ -53,12 +58,16 @@ class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
         return epsol::iterator::end();
     }
 
-    self_type operator++() {
-        auto next = inc_(now_);
-        if (not(terminated_ = terminated_ or is_terminate_(now_, next))) {
-            now_ = std::move(next);
+    self_type &operator++() {
+        if (terminated_ or (terminated_ = term_now_(now_))) {
+            return *this;
         }
-        return *this;
+        auto next = inc_(now_);
+        if ((terminated_ = term_next_(next))) {
+            return *this;
+        }
+        now_ = std::move(next);
+        return filter_(get_value()) ? *this : operator++();
     }
     self_type operator++(int) {
         auto ret = *this;
@@ -79,7 +88,8 @@ class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
     bool terminated_ = false;
     accessor get_;
     incrementor inc_;
-    terminator is_terminate_;
+    terminator term_now_, term_next_;
+    filter filter_;
 };
 
 template <bool b, typename T, typename H, typename Tag>
