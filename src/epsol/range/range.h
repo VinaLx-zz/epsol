@@ -11,78 +11,84 @@ namespace epsol::range {
 template <typename T, bool DefaultIncrement>
 class range {
   public:
-    range(const T &start)
-        : start_(start),
-          terminator_([](const T &_1, const T &_2) { return false; }) {}
+    range(const T &start) : start_(start){};
 
-    using incrementor = typename iterator<T>::incrementor;
-    using terminator = typename iterator<T>::terminator;
+    using incrementor_t = typename iterator<T>::incrementor;
+    using terminator_t = typename iterator<T>::terminator;
+    using filter_t = typename iterator<T>::filter;
 
-    range(const T &start, incrementor inc, terminator term)
+    range(
+        const T &start, incrementor_t inc, terminator_t term_now,
+        terminator_t term_next, filter_t p)
         : start_(start), incrementor_(std::move(inc)),
-          terminator_(std::move(term)) {}
+          term_now_(std::move(term_now)), term_next_(std::move(term_next)),
+          filter_(std::move(p)) {}
 
     iterator<T> begin() const {
         if constexpr (DefaultIncrement) {
             return iterator<T>(
-                start_,
-                [](const T &t) {
-                    T tt(t);
-                    return ++tt;
-                },
-                terminator_);
+                start_, [](T t) -> T { return ++t; }, term_now_, term_next_,
+                filter_);
         }
-        return iterator<T>(start_, incrementor_, terminator_);
+        return iterator<T>(
+            start_, incrementor_, term_now_, term_next_, filter_);
     }
     epsol::iterator::iter_end_t end() const {
         return epsol::iterator::iter_end_t{};
     }
 
     range<T, DefaultIncrement> to(const T &e) {
+        using namespace epsol::functional::predicate;
         return range<T, DefaultIncrement>(
             start_, incrementor_,
-            make_terminator(
-                [e](const T &now, const T &_) { return now == e; }));
+            terminator_t([e](const T &now) { return now == e; }) or term_now_,
+            term_next_, filter_);
     }
 
     range<T, DefaultIncrement> until(const T &e) {
+        using namespace epsol::functional::predicate;
         return range<T, DefaultIncrement>(
-            start_, incrementor_,
-            make_terminator(
-                [e](const T &_, const T &next) { return next == e; }));
+            start_, incrementor_, term_now_,
+            terminator_t([e](const T &next) { return next == e; }) or
+                term_next_,
+            filter_);
     }
 
     template <typename Func>
     range<T, DefaultIncrement> when(Func f) {
+        using namespace epsol::functional::predicate;
         return range<T, DefaultIncrement>(
-            start_, incrementor_,
-            make_terminator([f = std::move(f)](const T &_, const T &next) {
+            start_, incrementor_, term_now_,
+            terminator_t([f = std::move(f)](const T &next) {
                 return not f(next);
-            }));
+            }) or
+                term_next_,
+            filter_);
+    }
+
+    range<T, DefaultIncrement> filter(filter_t f) {
+        using namespace epsol::functional::predicate;
+        return range<T, DefaultIncrement>(
+            start_, incrementor_, term_now_, term_next_, f and filter_);
     }
 
     template <typename P>
     range<T, false> step(P p) {
-        if constexpr (std::is_convertible<P, incrementor>::value) {
+        if constexpr (std::is_convertible<P, incrementor_t>::value) {
             return range<T, false>(
-                start_, make_incrementor(std::move(p)), terminator_);
+                start_, make_incrementor(std::move(p)), term_now_, term_next_,
+                filter_);
         } else {
             return range<T, false>(
                 start_, make_incrementor([p = std::move(p)](const T &t)->T {
                     return t + p;
                 }),
-                terminator_);
+                term_now_, term_next_, filter_);
         }
     }
 
   private:
-    terminator make_terminator(terminator new_term) {
-        return
-            [ old = this->terminator_, new_term ](const T &now, const T &next) {
-            return new_term(now, next) or old(now, next);
-        };
-    }
-    incrementor make_incrementor(incrementor new_inc) {
+    incrementor_t make_incrementor(incrementor_t new_inc) {
         if constexpr (DefaultIncrement) {
             return new_inc;
         }
@@ -92,8 +98,10 @@ class range {
     }
 
     T start_;
-    typename iterator<T>::incrementor incrementor_;
-    typename iterator<T>::terminator terminator_;
+    incrementor_t incrementor_;
+    filter_t filter_ = functional::always<const T &>(true);
+    terminator_t term_now_ = functional::always<const T &>(false),
+                 term_next_ = functional::always<const T &>(false);
 };
 
 template <typename T>

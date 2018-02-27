@@ -12,10 +12,10 @@ int main() {
     }
     cout << '\n';
 
-    // for (auto i : range::from(1).to(5).filter([](int i) { return i % 2; })) {
-    //     cout << i << ' '; // 1 3 5
-    // }
-    // cout << '\n';
+    for (auto i : from(1).to(5).filter([](int i) { return i % 2; })) {
+        cout << i << ' '; // 1 3 5
+    }
+    cout << '\n';
 
     for (auto i : from(1).to(9).step(2)) {
         cout << i << ' '; // 1 3 5 7 9

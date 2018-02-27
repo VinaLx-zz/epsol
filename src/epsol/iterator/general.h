@@ -28,8 +28,8 @@ class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
 
   public:
     using incrementor = std::function<H(H)>;
-    using terminator = std::function<bool(const H &)>;
-    using filter = std::function<bool(const T &)>;
+    using terminator = functional::Predicate<const H &>;
+    using filter = functional::Predicate<const T &>;
     using accessor = std::function<typename super_type::reference(const H &)>;
 
     forward_iterator(
@@ -37,7 +37,8 @@ class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
         terminator term_next,
         filter p = epsol::functional::always<const T &>(true))
         : now_(init), get_(get), inc_(inc), term_now_(term_now),
-          term_next_(term_next), filter(p){};
+          term_next_(term_next), filter_(p),
+          terminated_(term_next_(init) or not p(get(init))){};
 
     typename super_type::pointer operator->() {
         return &get_value();
@@ -85,11 +86,11 @@ class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
 
   private:
     H now_;
-    bool terminated_ = false;
     accessor get_;
     incrementor inc_;
     terminator term_now_, term_next_;
     filter filter_;
+    bool terminated_ = false;
 };
 
 template <bool b, typename T, typename H, typename Tag>
