@@ -2,6 +2,7 @@
 #define EPSOL_FUNCTIONAL_
 
 #include <functional>
+#include "epsol/functional/predicate.h"
 
 namespace epsol::functional {
 
