@@ -28,7 +28,9 @@ auto adapt_forward(Iter b, EndIter e) {
     return Result(
         b, [](const Iter &iter) -> typename Result::reference { return *iter; },
         [](Iter iter) -> Iter { return ++iter; },
-        [e](const Iter &now, const Iter &next) { return next == e; });
+        functional::always<const Iter &>(false),
+        [e](const Iter &next) { return next == e; },
+        functional::always<const Tp &>(true));
 }
 
 template <typename Iterable>

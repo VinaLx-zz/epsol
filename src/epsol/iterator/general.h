@@ -34,8 +34,7 @@ class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
 
     forward_iterator(
         const H &init, accessor get, incrementor inc, terminator term_now,
-        terminator term_next,
-        filter p = epsol::functional::always<const T &>(true))
+        terminator term_next, filter p)
         : now_(init), get_(get), inc_(inc), term_now_(term_now),
           term_next_(term_next), filter_(p),
           terminated_(term_next_(init) or not p(get(init))){};
@@ -90,7 +89,7 @@ class forward_iterator : public iterator_basic_traits<Readonly, T, Tag> {
     incrementor inc_;
     terminator term_now_, term_next_;
     filter filter_;
-    bool terminated_ = false;
+    bool terminated_;
 };
 
 template <bool b, typename T, typename H, typename Tag>
