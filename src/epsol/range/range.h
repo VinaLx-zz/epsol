@@ -21,8 +21,8 @@ class range {
         const T &start, incrementor_t inc, terminator_t term_now,
         terminator_t term_next, filter_t p)
         : start_(start), incrementor_(std::move(inc)),
-          term_now_(std::move(term_now)), term_next_(std::move(term_next)),
-          filter_(std::move(p)) {}
+          term_now_(std::move(term_now)), filter_(std::move(p)),
+          term_next_(std::move(term_next)) {}
 
     iterator<T> begin() const {
         if constexpr (DefaultIncrement) {
@@ -41,7 +41,7 @@ class range {
         using namespace epsol::functional::predicate;
         return range<T, DefaultIncrement>(
             start_, incrementor_,
-            terminator_t([e](const T &now) { return now == e; }) or term_now_,
+            [e](const T &now) { return now == e; } or term_now_,
             term_next_, filter_);
     }
 
@@ -49,9 +49,7 @@ class range {
         using namespace epsol::functional::predicate;
         return range<T, DefaultIncrement>(
             start_, incrementor_, term_now_,
-            terminator_t([e](const T &next) { return next == e; }) or
-                term_next_,
-            filter_);
+            [e](const T &next) { return next == e; } or term_next_, filter_);
     }
 
     template <typename Func>
@@ -59,9 +57,7 @@ class range {
         using namespace epsol::functional::predicate;
         return range<T, DefaultIncrement>(
             start_, incrementor_, term_now_,
-            terminator_t([f = std::move(f)](const T &next) {
-                return not f(next);
-            }) or
+            [f = std::move(f)](const T &next) { return not f(next); } or
                 term_next_,
             filter_);
     }
