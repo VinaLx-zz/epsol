@@ -1,0 +1,40 @@
+#ifndef EPSOL_MACRO_MAYBE_H_
+#define EPSOL_MACRO_MAYBE_H_
+
+#include "./base.h"
+
+/// interfaces
+
+/**
+ * EPSOL_MAYBE_VALUE_OR(EPSOL_JUST(100), 0) ==> 100
+ * EPSOL_MAYBE_VALUE_OR(ANY_OTHER_THING, 0) ==> 0
+ */
+#define EPSOL_MAYBE_VALUE_OR(maybe, ...) \
+    EPSOL_IF(EPSOL_IS_JUST(maybe))       \
+    (EPSOL_DETAIL_EXTRACT_JUST(maybe), __VA_ARGS__)
+
+/**
+ * EPSOL_IS_JUST(EPSOL_JUST(100)) ==> true
+ * EPSOL_IS_JUST(ANY_OTHER_THING) ==> false
+ */
+#define EPSOL_IS_JUST(maybe) EPSOL_DETAIL_CDR(EPSOL_DETAIL_EXPAND_TEST(maybe))
+
+/// implementation detail
+
+#define EPSOL_DETAIL_EXTRACT_JUST(just) \
+    EPSOL_CONCAT(EPSOL_DETAIL_EXTRACT_, just)
+
+#define EPSOL_DETAIL_EXTRACT_EPSOL_JUST(...) __VA_ARGS__
+
+#define EPSOL_DETAIL_EXPAND_TEST(maybe) \
+    (EPSOL_CONCAT(EPSOL_DETAIL_EXPAND_TEST_, maybe), false)
+
+#define EPSOL_DETAIL_CDR(p) EPSOL_DETAIL_CDR_IMPL p
+#define EPSOL_DETAIL_CDR_IMPL(a, b) b
+
+#define EPSOL_DETAIL_INJECT_EMPTY(...)
+
+#define EPSOL_DETAIL_EXPAND_TEST_EPSOL_JUST(...) DUMMY, true \
+    ) EPSOL_DETAIL_INJECT_EMPTY (
+
+#endif  // EPSOL_MACRO_MAYBE_H_
