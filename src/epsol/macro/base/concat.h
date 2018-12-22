@@ -1,0 +1,8 @@
+#ifndef EPSOL_MACRO_BASE_CONCAT_H_
+#define EPSOL_MACRO_BASE_CONCAT_H_
+
+#define EPSOL_CONCAT(a, b) EPSOL_DETAIL_CONCAT(a, b)
+
+#define EPSOL_DETAIL_CONCAT(a, b) a##b
+
+#endif // EPSOL_MACRO_BASE_CONCAT_H_
